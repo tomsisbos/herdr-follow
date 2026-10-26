@@ -15,7 +15,7 @@ the pane you are in. Nothing reloads, so a herdr client running in the integrate
 
 Folder #1 is a fixed anchor: VS Code restarts the extension host whenever the first workspace folder
 changes. Open the window on a workspace whose first folder never moves (`make workspace` creates one
-anchored on `~/.herdr/worktrees`).
+anchored on `~/.herdr/worktrees`, with the extension enabled for that workspace only).
 
 The extension reconnects by itself when the herdr server restarts or updates.
 
@@ -35,7 +35,7 @@ Start herdr in that window's terminal. The output channel **herdr follow** logs 
 
 | Setting | Default | |
 |---|---|---|
-| `herdrFollow.enabled` | `true` | Follow herdr focus in this window. Turn it off per window to keep a folder pinned. |
+| `herdrFollow.enabled` | `false` | Follow herdr focus in this window. `make workspace` turns it on in that workspace only. Ignored outside a `.code-workspace` window, because adding a folder to a single-folder window reloads it. |
 | `herdrFollow.socketPath` | `~/.config/herdr/herdr.sock` | herdr API socket. |
 | `herdrFollow.revealInExplorer` | `false` | Show the Explorer view after each switch. |
 

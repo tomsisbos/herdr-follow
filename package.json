@@ -2,7 +2,7 @@
   "name": "herdr-follow",
   "displayName": "herdr follow",
   "description": "Show the git worktree of the focused herdr pane as a workspace folder.",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "publisher": "local",
   "license": "MIT",
   "repository": "https://github.com/tomsisbos/herdr-follow",
@@ -13,7 +13,7 @@
     "configuration": {
       "title": "herdr follow",
       "properties": {
-        "herdrFollow.enabled": { "type": "boolean", "default": true, "description": "Follow herdr pane focus in this window." },
+        "herdrFollow.enabled": { "type": "boolean", "default": false, "scope": "window", "description": "Follow herdr pane focus in this window. Enable it only in a multi-root workspace: adding a folder to a single-folder window reloads it." },
         "herdrFollow.socketPath": { "type": "string", "default": "~/.config/herdr/herdr.sock", "description": "herdr API socket." },
         "herdrFollow.revealInExplorer": { "type": "boolean", "default": false, "description": "Show the Explorer view after each switch." }
       }

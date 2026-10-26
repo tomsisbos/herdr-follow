@@ -27,5 +27,5 @@ WORKSPACE := $(HOME)/.herdr/herdr.code-workspace
 
 workspace:
 	@test ! -e $(WORKSPACE) || { echo "$(WORKSPACE) already exists"; exit 1; }
-	printf '{\n  "folders": [{ "path": "worktrees" }]\n}\n' > $(WORKSPACE)
+	printf '{\n  "folders": [{ "path": "worktrees" }],\n  "settings": { "herdrFollow.enabled": true }\n}\n' > $(WORKSPACE)
 	@echo "Open it with: code $(WORKSPACE)"

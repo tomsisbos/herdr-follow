@@ -89,6 +89,11 @@ function connect() {
 function activate(context) {
   out = vscode.window.createOutputChannel('herdr follow');
   if (!cfg('enabled')) return;
+  // In a single-folder window, adding a folder converts it to a workspace and reloads it.
+  if (!vscode.workspace.workspaceFile) {
+    out.appendLine('disabled: open a .code-workspace file (see make workspace)');
+    return;
+  }
   connect();
   context.subscriptions.push(out, { dispose: deactivate });
 }

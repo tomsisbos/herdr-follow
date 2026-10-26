@@ -11,6 +11,7 @@ const fakeVscode = {
   workspace: {
     getConfiguration: () => ({ get: (k) => ({ enabled: true })[k] }),
     workspaceFolders: [{ uri: { fsPath: '/anchor' } }],
+    workspaceFile: { fsPath: '/anchor.code-workspace' },
     updateWorkspaceFolders: (...args) => { calls.push(args); return true; },
   },
   window: { createOutputChannel: () => ({ appendLine: (l) => { lines.push(l); console.log('[out]', l); }, dispose() {} }) },
