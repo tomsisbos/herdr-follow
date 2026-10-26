@@ -1,0 +1,22 @@
+{
+  "name": "herdr-follow",
+  "displayName": "herdr follow",
+  "description": "Show the git worktree of the focused herdr pane as a workspace folder.",
+  "version": "0.1.0",
+  "publisher": "local",
+  "license": "MIT",
+  "repository": "https://github.com/tomsisbos/herdr-follow",
+  "engines": { "vscode": "^1.90.0" },
+  "main": "./extension.js",
+  "activationEvents": ["onStartupFinished"],
+  "contributes": {
+    "configuration": {
+      "title": "herdr follow",
+      "properties": {
+        "herdrFollow.enabled": { "type": "boolean", "default": true, "description": "Follow herdr pane focus in this window." },
+        "herdrFollow.socketPath": { "type": "string", "default": "~/.config/herdr/herdr.sock", "description": "herdr API socket." },
+        "herdrFollow.revealInExplorer": { "type": "boolean", "default": false, "description": "Show the Explorer view after each switch." }
+      }
+    }
+  }
+}
