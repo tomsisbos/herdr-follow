@@ -6,8 +6,9 @@ const path = require('path');
 const { execFile } = require('child_process');
 
 let sock, retry, out, lastError, disposed = false;
-// Latest focus wins: `seq` drops stale lookups, `wanted` is applied once no update is pending.
-let seq = 0, wanted, pending = false;
+// Latest focus wins: a lookup older than the newest resolved one is dropped, and
+// `wanted` is applied once no update is pending.
+let seq = 0, resolvedSeq = 0, wanted, pending = false, pendingTimer;
 
 function cfg(key) {
   return vscode.workspace.getConfiguration('herdrFollow').get(key);
@@ -38,8 +39,11 @@ function request(method, params) {
       if (nl < 0) return;
       c.end();
       let msg;
-      try { msg = JSON.parse(buf.slice(0, nl)); } catch (e) { return reject(e); }
-      msg.error ? reject(new Error(JSON.stringify(msg.error))) : resolve(msg.result);
+      try {
+        msg = JSON.parse(buf.slice(0, nl));
+        if (msg.error) throw new Error(JSON.stringify(msg.error));
+      } catch (e) { return reject(e); }
+      resolve(msg.result);
     });
     c.on('error', reject);
     // A promise settles once, so this only fires when no reply line arrived.
@@ -53,7 +57,8 @@ async function follow(paneId) {
   const cwd = pane.foreground_cwd || pane.cwd;
   if (!cwd) return;
   const root = await gitRoot(cwd);
-  if (mine !== seq) return;
+  if (mine < resolvedSeq) return;
+  resolvedSeq = mine;
   wanted = { paneId, root };
   apply();
 }
@@ -69,6 +74,14 @@ function apply() {
   const ok = vscode.workspace.updateWorkspaceFolders(1, Math.max(folders.length - 1, 0),
     { uri: vscode.Uri.file(root), name: path.basename(path.dirname(root)) + '/' + path.basename(root) });
   pending = ok;
+  // A failed save of the workspace file fires no change event: stop waiting after 3s.
+  // Apply only a focus that arrived meanwhile, so a broken workspace file cannot loop
+  // into an error toast every 3s.
+  clearTimeout(pendingTimer);
+  if (ok) pendingTimer = setTimeout(() => {
+    pending = false;
+    if (wanted.root !== root) apply();
+  }, 3000);
   out.appendLine(`${paneId} -> ${root}${ok ? '' : ' (update rejected)'}`);
   if (ok && cfg('revealInExplorer')) vscode.commands.executeCommand('workbench.view.explorer');
 }
@@ -118,7 +131,13 @@ function activate(context) {
     return;
   }
   context.subscriptions.push(
-    vscode.workspace.onDidChangeWorkspaceFolders(() => { pending = false; apply(); }),
+    // Only resume our own update: folders changed by hand or by another extension stay.
+    vscode.workspace.onDidChangeWorkspaceFolders(() => {
+      if (!pending) return;
+      pending = false;
+      clearTimeout(pendingTimer);
+      apply();
+    }),
     { dispose: deactivate });
   connect();
 }
@@ -126,6 +145,7 @@ function activate(context) {
 function deactivate() {
   disposed = true;
   clearTimeout(retry);
+  clearTimeout(pendingTimer);
   if (sock) sock.destroy();
 }
 
