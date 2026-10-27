@@ -13,6 +13,7 @@ const fakeVscode = {
     workspaceFolders: [{ uri: { fsPath: '/anchor' } }],
     workspaceFile: { fsPath: '/anchor.code-workspace' },
     updateWorkspaceFolders: (...args) => { calls.push(args); return true; },
+    onDidChangeWorkspaceFolders: () => ({ dispose() {} }),
   },
   window: { createOutputChannel: () => ({ appendLine: (l) => { lines.push(l); console.log('[out]', l); }, dispose() {} }) },
   commands: { executeCommand() {} },
