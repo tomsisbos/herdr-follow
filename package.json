@@ -2,21 +2,56 @@
   "name": "herdr-follow",
   "displayName": "herdr follow",
   "description": "Show the git worktree of the focused herdr pane as a workspace folder.",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "publisher": "local",
   "license": "MIT",
   "repository": "https://github.com/tomsisbos/herdr-follow",
-  "engines": { "vscode": "^1.90.0" },
+  "engines": {
+    "vscode": "^1.90.0"
+  },
   "main": "./extension.js",
-  "activationEvents": ["onStartupFinished"],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
   "contributes": {
     "configuration": {
       "title": "herdr follow",
       "properties": {
-        "herdrFollow.enabled": { "type": "boolean", "default": false, "scope": "window", "description": "Follow herdr pane focus in this window. Enable it only in a multi-root workspace: adding a folder to a single-folder window reloads it." },
-        "herdrFollow.socketPath": { "type": "string", "default": "~/.config/herdr/herdr.sock", "description": "herdr API socket." },
-        "herdrFollow.revealInExplorer": { "type": "boolean", "default": false, "description": "Show the Explorer view after each switch." }
+        "herdrFollow.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Follow herdr pane focus."
+        },
+        "herdrFollow.socketPath": {
+          "type": "string",
+          "default": "~/.config/herdr/herdr.sock",
+          "description": "herdr API socket."
+        },
+        "herdrFollow.revealInExplorer": {
+          "type": "boolean",
+          "default": false,
+          "description": "Show the Explorer view after each switch."
+        },
+        "herdrFollow.scope": {
+          "type": "string",
+          "enum": [
+            "herdr-terminal",
+            "all-windows"
+          ],
+          "default": "herdr-terminal",
+          "enumDescriptions": [
+            "Only windows that run herdr in an integrated terminal follow it.",
+            "Every window follows herdr, including ones unrelated to it."
+          ],
+          "description": "Which windows follow herdr."
+        }
       }
+    }
+  },
+  "capabilities": {
+    "untrustedWorkspaces": {
+      "supported": true,
+      "description": "Only talks to the local herdr socket and runs git rev-parse; never runs workspace code."
     }
   }
 }
