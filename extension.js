@@ -8,7 +8,7 @@ const { execFile } = require('child_process');
 // The folder this extension manages is recognised by its name, so it survives extension host restarts.
 const MARK = 'herdr: ';
 
-let sock, retry, out, disposed = false;
+let sock, retry, out, lastError, disposed = false;
 let pending, running = false;
 
 function cfg(key) {
@@ -71,6 +71,8 @@ async function hostsHerdr() {
 function request(method, params) {
   return new Promise((resolve, reject) => {
     const c = net.createConnection(socketPath());
+    c.setEncoding('utf8');
+    c.setTimeout(5000, () => c.destroy(new Error(`${method} timed out`)));
     let buf = '';
     c.on('connect', () => c.write(JSON.stringify({ id: 'hf', method, params }) + '\n'));
     c.on('data', (d) => {
@@ -78,10 +80,16 @@ function request(method, params) {
       const nl = buf.indexOf('\n');
       if (nl < 0) return;
       c.end();
-      const msg = JSON.parse(buf.slice(0, nl));
-      msg.error ? reject(new Error(JSON.stringify(msg.error))) : resolve(msg.result);
+      let msg;
+      try {
+        msg = JSON.parse(buf.slice(0, nl));
+        if (msg.error) throw new Error(JSON.stringify(msg.error));
+      } catch (e) { return reject(e); }
+      resolve(msg.result);
     });
     c.on('error', reject);
+    // A promise settles once, so this only fires when no reply line arrived.
+    c.on('close', () => reject(new Error(`${method}: connection closed without a reply`)));
   });
 }
 
@@ -150,7 +158,9 @@ function connect() {
   if (disposed) return;
   let buf = '';
   sock = net.createConnection(socketPath());
+  sock.setEncoding('utf8');
   sock.on('connect', () => {
+    lastError = undefined;
     log(`subscribed on ${socketPath()}`);
     sock.write(JSON.stringify({
       id: 'hf-sub', method: 'events.subscribe',
@@ -173,7 +183,11 @@ function connect() {
   });
   // herdr server restarts / updates drop the socket; reconnect until disposed.
   sock.on('close', () => { if (!disposed) retry = setTimeout(connect, 3000); });
-  sock.on('error', (e) => log(`socket: ${e.message}`));
+  // Log each distinct error once instead of every retry while herdr is down.
+  sock.on('error', (e) => {
+    if (e.message !== lastError) log(`socket: ${e.message} (retrying every 3s)`);
+    lastError = e.message;
+  });
 }
 
 function activate(context) {
